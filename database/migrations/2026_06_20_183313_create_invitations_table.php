@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('team_id')->constrained('teams')->cascadeOnDelete();
+            $table->string('email');
+            $table->enum('role',['owner','manager','member'])->default('member');
+            $table->string('token')->unique();
+            $table->enum('status',['pending','accepted','declined'])->default('pending');
             $table->timestamps();
         });
     }

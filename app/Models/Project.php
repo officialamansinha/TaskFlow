@@ -9,4 +9,6 @@ class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
+    protected $fillable = ['team_id','name','created_by','status'];
+    protected $casts = ['status' => 'boolean'];
 }

@@ -26,8 +26,8 @@ class AppServiceProvider extends ServiceProvider
          Scramble::afterOpenApiGenerated(function (OpenApi $openApi) {
         $openApi->secure(SecurityScheme::http('bearer'));
     });
-    Gate::define('viewApiDocs', function () {
-            return true;
-        });
+    Gate::define('viewApiDocs', function ($user = null) {
+        return true;
+    });
     }
 }

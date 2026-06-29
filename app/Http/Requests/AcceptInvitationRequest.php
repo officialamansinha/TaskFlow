@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreInvitationRequest extends FormRequest
+class AcceptInvitationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,9 +23,7 @@ class StoreInvitationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'team_id' => 'required|integer|exists:teams,id',
-            'email' => 'required|email',
-            'role' =>'sometimes|in:manager,member'
+            'token' => 'required|string'
         ];
     }
 }

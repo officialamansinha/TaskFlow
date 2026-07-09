@@ -6,7 +6,6 @@ use App\Models\Team;
 use App\Http\Requests\StoreTeamRequest;
 use App\Http\Requests\UpdateTeamRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
@@ -15,11 +14,7 @@ class TeamController extends Controller
      */
     public function index(Request $request)
     {
-        $teamsIds = DB::Table('team_user')
-                    ->where('user_id',$request->user()->id)
-                    ->pluck('team_id');
-        
-        $teams = Team::whereIn('id',$teamsIds)->get();
+        $teams = $request->user()->teams;
         return response()->json($teams);
     }
 
@@ -35,10 +30,11 @@ class TeamController extends Controller
             'owner_id' => $request->user()->id,
         ]);
 
-        DB::table('team_user')->insert([
-            'team_id' => $team->id,
-            'user_id' => $request->user()->id,
-            'role' => 'owner',
+        $team->members()->syncWithoutDetaching([
+            $request->user()->id => [  
+                'role' => 'owner',   
+                'status' => true,
+            ]
         ]);
         return response()->json($team,201);
     }
@@ -55,10 +51,7 @@ class TeamController extends Controller
             ],404);
         }
         // Temporary manual check — real Policy comes in Stage 5
-        $isMember = DB::table('team_user')
-            ->where('team_id', $team->id)
-            ->where('user_id', $request->user()->id)
-            ->exists();
+        $isMember = $request->user()->teams->contains($team->id);
 
         if (! $isMember) {
             return response()->json(['message' => 'Forbidden'], 403);
@@ -79,8 +72,8 @@ class TeamController extends Controller
         if (! $team) {
             return response()->json(['message' => 'Team not found'], 404);
         }
-
-        if ($team->owner_id !== $request->user()->id) {
+        $isOwner = $request->user()->ownedTeams->contains($team->id);
+        if (!$isOwner) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -102,7 +95,9 @@ class TeamController extends Controller
             return response()->json(['message' => 'Team not found'], 404);
         }
 
-        if ($team->owner_id !== $request->user()->id) {
+        $isOwner = $request->user()->ownedTeams->contains($team->id);
+
+        if (!$isOwner) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 

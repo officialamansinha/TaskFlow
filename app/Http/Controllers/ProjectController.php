@@ -3,9 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\User;
-use App\Models\Team;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use Illuminate\Http\Request;  
@@ -17,9 +14,8 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $teamIds = DB::Table('team_user')
-                ->where('user_id',$request->user()->id)
-                ->pluck('team_id');
+        $teamIds = $request->user()->teams->pluck('id');
+
 
         $project = Project::whereIN('team_id',$teamIds)->get();
 
@@ -33,10 +29,8 @@ class ProjectController extends Controller
      */
     public function store(StoreProjectRequest $request)
     {
-        $teamIds = DB::Table('team_user')
-                ->where('user_id',$request->user()->id)
-                ->pluck('team_id');
-        if(!$teamIds->contains($request->team_id) ){
+        $teamIds = $request->user()->teams->contains($request->team_id);
+        if(!$teamIds){
             return response()->json([
                 'message' => 'Forbidden',
             ],403);
@@ -60,10 +54,7 @@ class ProjectController extends Controller
         if(!$project){
             return response()->json(['message' => 'Not Found '],404);
         }
-        $isMember  = DB::Table('team_user')
-                ->where('team_id',$project->team_id)
-                ->where('user_id',$request->user()->id)
-                ->exists();
+        $isMember  = $request->user()->teams->contains($project->team_id);
         if(!$isMember ){
             return response()->json(['message' => 'Forbidden '],403);
         }
@@ -85,7 +76,7 @@ class ProjectController extends Controller
         }
 
         //Check if this Project has been created by him or not
-        if($project->created_by != $request->user()->id){
+        if($project->created_by !== $request->user()->id){
             return response()->json(['message' => 'No Access'],403);
         }
 
@@ -104,7 +95,7 @@ class ProjectController extends Controller
             return response()->json(['message' => 'Project Not Found'],404);
         }
         //Check if this Project has been created by him or not
-        if($project->created_by != $request->user()->id){
+        if($project->created_by !== $request->user()->id){
             return response()->json(['message' => 'No Access'],403);
         }
         $project->delete();

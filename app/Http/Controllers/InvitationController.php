@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Invitation;
 use App\Models\Team;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Http\Requests\StoreInvitationRequest;
@@ -17,12 +16,8 @@ class InvitationController extends Controller
      */
     public function index(Request $request)
     {
-        $team_ids = DB::table('team_user')
-                    ->where('user_id',$request->user()->id)
-                    ->pluck('team_id');
-        $team_ids = Team::where('owner_id',$request->user()->id)
-                    ->pluck('id');
-        $invitation = Invitation::whereIn('team_id',$team_ids)->get();
+        $teamIds = $request->user()->ownedTeams->pluck('id');
+        $invitation = Invitation::whereIn('team_id',$teamIds)->get();
         return response()->json($invitation,200);
     }
 
@@ -37,15 +32,7 @@ class InvitationController extends Controller
                 'message' => 'Forbidden'
             ],404);
         }
-        if($team->owner_id != $request->user()->id){
-            return response()->json([
-                'message' => 'Access Denied'
-            ],403);
-        }
-        $is_Member = DB::table('team_user')
-                    ->where('user_id',$request->user()->id)
-                    ->pluck('team_id');
-        if (!$is_Member->contains($request->team_id)) {
+        if (!$request->user()->ownedTeams->contains($request->team_id)) {
             return response()->json([
                 'message' =>'Forbidden'
             ],403);
@@ -80,13 +67,11 @@ class InvitationController extends Controller
                 'message' =>'Invitation was declined'
             ],200);
         }
-        DB::table('team_user')->insert([
-            'team_id' => $invitation->team_id,
-            'user_id' => $request->user()->id,
-            'role' =>  $invitation->role,
-            'status' => true,
-            'created_at' => now(),
-            'updated_at' => now()
+        $invitation->team->members()->syncWithoutDetaching([
+            $request->user()->id => [
+                'role'   => $invitation->role,
+                'status' => true,
+            ]
         ]);
         $invitation->update([
             'status' => 'accepted'

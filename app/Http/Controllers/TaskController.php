@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Project;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
@@ -17,11 +16,8 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $teamIds = DB::Table('team_user')
-                ->where('user_id',$request->user()->id)
-                ->pluck('team_id');
-        $projectIds = Project::whereIn('team_id',$teamIds)
-                    ->pluck('id');
+        $teamIds = $request->user()->teams->pluck('id');
+        $projectIds = Project::whereIn('team_id', $teamIds)->pluck('id');
         $task = Task::whereIn('project_id',$projectIds)->get();
         return response()->json($task,200);
     }
@@ -40,11 +36,7 @@ class TaskController extends Controller
         $project = Project::find($task->project_id);
 
         //Authorization 
-        $is_Member = DB::table('team_user')
-                    ->where('team_id',$project->team_id)
-                    ->where('user_id',$request->user()->id)
-                    ->exists();
-
+        $is_Member = $request->user()->teams->contains($project->team_id);
         if(!$is_Member){
             return response()->json([
                 'message' => 'Forbidden'
@@ -70,10 +62,7 @@ class TaskController extends Controller
         }
 
         //Authorization 
-        $is_Member = DB::table('team_user')
-                    ->where('team_id',$project->team_id)
-                    ->where('user_id',$request->user()->id)
-                    ->exists();
+        $is_Member = $request->user()->teams->contains($project->team_id);
 
         if(!$is_Member){
             return response()->json([
@@ -107,10 +96,7 @@ class TaskController extends Controller
         $project = Project::find($task->project_id);
 
         //Authorization 
-        $is_Member = DB::table('team_user')
-                    ->where('team_id',$project->team_id)
-                    ->where('user_id',$request->user()->id)
-                    ->exists();
+        $is_Member = $request->user()->teams->contains($project->team_id);
 
         if(!$is_Member){
             return response()->json([
@@ -142,10 +128,7 @@ class TaskController extends Controller
         $project = Project::find($task->project_id);
 
         //Authorization 
-        $is_Member = DB::table('team_user')
-                    ->where('team_id',$project->team_id)
-                    ->where('user_id',$request->user()->id)
-                    ->exists();
+        $is_Member = $request->user()->teams->contains($project->team_id);
 
         if(!$is_Member){
             return response()->json([

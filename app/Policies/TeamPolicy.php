@@ -21,7 +21,7 @@ class TeamPolicy
      */
     public function view(User $user, Team $team): bool
     {
-        return false;
+        return $user->teams->contains($team->id);
     }
 
     /**
@@ -37,7 +37,7 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return false;
+        return $user->ownedTeams->contains($team->id);
     }
 
     /**
@@ -45,7 +45,7 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        return false;
+        return $user->ownedTeams->contains($team->id);
     }
 
     /**

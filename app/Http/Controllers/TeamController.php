@@ -50,12 +50,7 @@ class TeamController extends Controller
                 'message' => 'Team Not Found'
             ],404);
         }
-        // Temporary manual check — real Policy comes in Stage 5
-        $isMember = $request->user()->teams->contains($team->id);
-
-        if (! $isMember) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('view',$team);
 
         return response()->json($team);
     }
@@ -72,10 +67,7 @@ class TeamController extends Controller
         if (! $team) {
             return response()->json(['message' => 'Team not found'], 404);
         }
-        $isOwner = $request->user()->ownedTeams->contains($team->id);
-        if (!$isOwner) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('update',$team);
 
         $team->update([
             'name' => $request->name ?? $team->name,
@@ -95,11 +87,7 @@ class TeamController extends Controller
             return response()->json(['message' => 'Team not found'], 404);
         }
 
-        $isOwner = $request->user()->ownedTeams->contains($team->id);
-
-        if (!$isOwner) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
+        $this->authorize('delete',$team);
 
         $team->delete();
 
